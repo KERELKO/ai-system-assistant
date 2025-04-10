@@ -1,11 +1,13 @@
 from pathlib import Path
-from logging import getLogger
+import logging
 
-
-logger = getLogger()
-
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 
 ROOT = Path(__file__).parent.parent.parent.parent
 
 
-__all__ = ['logger', 'ROOT']
+__all__ = ['ROOT']

@@ -1,15 +1,17 @@
+from loguru import logger
 from openai import AsyncOpenAI
-from openai.types.chat.chat_completion_user_message_param import ChatCompletionUserMessageParam
-from openai.types.chat.chat_completion_system_message_param import ChatCompletionSystemMessageParam
-
-from voice_assistant.core import logger
+from openai.types.chat.chat_completion_system_message_param import \
+    ChatCompletionSystemMessageParam
+from openai.types.chat.chat_completion_user_message_param import \
+    ChatCompletionUserMessageParam
 
 from voice_assistant.application.services.ai.base import AIAgent
 
-
 DEEPSEEK_BASE_URL = 'https://api.deepseek.com'
 PROMPT = """
-You are voice assistant who helps people and makes them happy, because they are speeking with you
+You are voice assistant who helps people and makes them happy, because they are speeking with you,
+most of the time give short and right answers
+
 """
 
 

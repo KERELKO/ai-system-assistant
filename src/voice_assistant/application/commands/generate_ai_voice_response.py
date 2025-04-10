@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+
+from loguru import logger
+
 from voice_assistant.application.services.ai.base import AIAgent
 from voice_assistant.application.services.text_to_speech.base import \
     BaseTextToSpeechService
-from voice_assistant.core import logger
 from voice_assistant.core.types import Output, Speech
 
 from .base import BaseCommandHandler, Command

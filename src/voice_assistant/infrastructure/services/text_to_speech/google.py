@@ -1,9 +1,9 @@
 import base64
 
 import httpx
+from loguru import logger
 
 from voice_assistant.core.types import Output, Speech
-from voice_assistant.core import logger
 from voice_assistant.core.exceptions import UnexpectedApplicationError, ApplicationException
 
 from voice_assistant.application.services.text_to_speech.base import BaseTextToSpeechService
