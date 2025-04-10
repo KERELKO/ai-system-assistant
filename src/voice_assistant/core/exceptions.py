@@ -1,0 +1,6 @@
+class UnexpectedApplicationError(Exception):
+    ...
+
+
+class ApplicationException(Exception):
+    ...
