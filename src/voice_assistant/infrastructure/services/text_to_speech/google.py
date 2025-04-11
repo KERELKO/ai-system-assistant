@@ -3,6 +3,7 @@ import base64
 import httpx
 from loguru import logger
 
+from voice_assistant.core import ROOT
 from voice_assistant.core.types import Output, Speech
 from voice_assistant.core.exceptions import UnexpectedApplicationError, ApplicationException
 
@@ -34,5 +35,10 @@ class GoogleTextToSpeechService(BaseTextToSpeechService):
 
         if output == 'bytes':
             return audio_content
+        elif output == 'file':
+            file_name = f'audio({len(text)}).mp3'
+            with open(path := (ROOT / 'audio' / file_name), '+wb') as file:
+                file.write(audio_content)
+                return path
         else:
-            raise ApplicationException(f'Only "{output}" supported as output format')
+            raise ApplicationException(f'"{output}" is not supported as output format')

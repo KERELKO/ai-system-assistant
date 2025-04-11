@@ -8,13 +8,14 @@ from voice_assistant.application.commands.generate_ai_voice_response import \
     GenerateAIVoiceResponseCommand
 from voice_assistant.application.mediator import Mediator
 from voice_assistant.core.container import init_container
+from voice_assistant.infrastructure.services.sound.base import SoundService
 
 
 async def main():
-    logger.info('Start listening...')
     container = init_container()
 
-    mediator = container.resolve(Mediator)
+    mediator: Mediator = container.resolve(Mediator)  # type: ignore
+    sound_service: SoundService = container.resolve(SoundService)  # type: ignore
 
     r = sr.Recognizer()
 
@@ -23,12 +24,11 @@ async def main():
         text = ''
 
         while True:
+            logger.info('Listening...')
             try:
-                audio = r.listen(source, timeout=2)
+                audio = r.listen(source, timeout=3)
             except sr.WaitTimeoutError:
                 logger.warning("Didn't recorgnize user voice or user didn't speak")
-                logger.info('Sleep for 5 seconds')
-                await asyncio.sleep(5)
                 continue
 
             try:
@@ -41,11 +41,17 @@ async def main():
                     f"Could not request results from Google Speech Recognition service; {e}"
                 )
 
-            text = text.lower()
+            logger.debug(text)
+            text = text.lower().strip()
 
             if text == 'exit':
                 logger.info('Closing program')
                 sys.exit(0)
+
+            ai_response = (await mediator.handle_command(
+                GenerateAIVoiceResponseCommand(text=text, output='bytes')
+            ))[0]
+            sound_service.play_sound(ai_response)
 
 
 if __name__ == '__main__':

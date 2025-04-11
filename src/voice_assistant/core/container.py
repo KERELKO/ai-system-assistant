@@ -12,6 +12,9 @@ from voice_assistant.core.config import Config
 from voice_assistant.infrastructure.services.ai.deepseek import DeepSeek
 from voice_assistant.infrastructure.services.text_to_speech.google import \
     GoogleTextToSpeechService
+from voice_assistant.infrastructure.services.sound.base import SoundService
+from voice_assistant.infrastructure.services.sound.mpg123 import MPG123SoundService
+from voice_assistant.infrastructure.services.ai.fake import FakeAIAgent
 
 
 @cache
@@ -23,6 +26,7 @@ def init_container() -> Container:
     config = Config()
     container.register(Config, instance=config)
 
+    # ai_agent = FakeAIAgent()
     ai_agent = DeepSeek(config.deepseek_api_token)
     container.register(AIAgent, instance=ai_agent)
 
@@ -30,6 +34,8 @@ def init_container() -> Container:
     container.register(
         BaseTextToSpeechService, instance=text_to_speech_service,
     )
+
+    container.register(SoundService, MPG123SoundService, scope=Scope.transient)
 
     mediator = Mediator(
         command_handlers={
