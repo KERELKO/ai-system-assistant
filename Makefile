@@ -1,3 +1,3 @@
 .PHONY: run
 run:
-	python3 -m voice_assistant.entry.cli
+	python3 -m system_assistant.entry.cli

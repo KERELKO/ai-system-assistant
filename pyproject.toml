@@ -3,13 +3,16 @@ requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "voice-assistant"
+name = "system-assistant"
 version = "0.1.0"
-description = "Add your description here"
+description = "System assistant powered with AI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.115.12",
+    "click>=8.1.8",
+    "langchain>=0.3.23",
+    "langchain-openai>=0.3.12",
+    "langgraph>=0.3.29",
     "loguru>=0.7.3",
     "openai>=1.72.0",
     "punq>=0.7.0",
