@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  zero:
+    container_name: dgraph-zero
+    image: dgraph/dgraph:v24.1.2
+    env_file:
+      - .env
+    volumes:
+      - ./dgraph:/var/lib/dgraph
+    ports:
+      - 5080:5080
+      - 6080:6080
+    command: dgraph zero --my=zero:5080
+
+  alpha:
+    container_name: dgraph-alpha
+    env_file:
+      - .env
+    image: dgraph/dgraph:v24.1.2
+    volumes:
+      - ./dgraph:/var/lib/dgraph
+    ports:
+      - 8080:8080
+      - 9080:9080
+    command: dgraph alpha --my=alpha:7080 --zero=zero:5080
+
+  ratel:
+    image: dgraph/ratel:latest
+    ports:
+      - 8000:8000
+    depends_on:
+      - zero
+      - alpha

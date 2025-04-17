@@ -1,20 +1,25 @@
+import os
 from pathlib import Path
 
 from langchain.tools import tool
 
 
 @tool(parse_docstring=True)
-def create_file(file_path: str, permission_level: int = 438):
+def create_file(file_path: str, permission_level: int = 438) -> str:
     """
     Create a file by path.
 
     Args:
         file_path: absolute path of the new file (e.g. /home/user/new_file.txt).
         permission_level (optional): UNIX permissions level represented as number, default is 438.
+
+    Returns:
+        file_path: if file was created
     """
 
     path_obj = Path(file_path)
     path_obj.touch(permission_level)
+    return file_path
 
 
 @tool(parse_docstring=True)
@@ -49,3 +54,54 @@ def change_permissions(path: str, permission_level: int, recursive: bool = False
 
     path_obj = Path(path)
     path_obj.chmod(permission_level)
+
+
+@tool(parse_docstring=True)
+def delete_file(path: str):
+    """
+    Delete file by provided path
+
+    Args:
+        path: absolute path to the file (e.g. /home/my_file.txt).
+    """
+    path_obj = Path(path)
+    path_obj.unlink(missing_ok=True)
+
+
+@tool(parse_docstring=True)
+def delete_folder(path: str):
+    """
+    Delete folder by provided path
+
+    Args:
+        path: absolute path to the folder (e.g. /home/my_folder).
+    """
+    path_obj = Path(path)
+    path_obj.rmdir()
+
+
+@tool(parse_docstring=True)
+def is_valid_path(path: str) -> bool:
+    """
+    Check if path is valid on current OS
+
+    Args:
+        path: absolute path that need to be checked (e.g. "/home/my_folder", "/usr/bin/my_bin")
+
+    """
+    return True if Path(path).exists() else False
+
+
+@tool(parse_docstring=True)
+def list_dir(path: str) -> list[str]:
+    """
+    List files and folders by path.
+
+    Args:
+        path: absolute path to the folder (e.g. /home/my_folder).
+
+    Returns:
+        list: list of files and directories (e.g. ['file1.txt', 'file2.txt', 'folder1', 'folder2']).
+    """
+
+    return os.listdir(path)

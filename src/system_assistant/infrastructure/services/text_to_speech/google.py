@@ -5,7 +5,7 @@ from loguru import logger
 
 from system_assistant.core import ROOT
 from system_assistant.core.types import Output, Speech
-from system_assistant.core.exceptions import UnexpectedApplicationError, ApplicationException
+from system_assistant.core.exceptions import UnexpectedApplicationException, ApplicationException
 
 from system_assistant.application.services.text_to_speech.base import BaseTextToSpeechService
 
@@ -30,7 +30,7 @@ class GoogleTextToSpeechService(BaseTextToSpeechService):
             data = response.json()
             if not response.is_success:
                 logger.error(msg := f'Failed to convert text to speech: {data}')
-                raise UnexpectedApplicationError(msg)
+                raise UnexpectedApplicationException(msg)
             audio_content = base64.b64decode(data['audioContent'])
 
         if output == 'bytes':

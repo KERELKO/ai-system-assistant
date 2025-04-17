@@ -1,4 +1,4 @@
-class UnexpectedApplicationError(Exception):
+class UnexpectedApplicationException(Exception):
     ...
 
 

@@ -1,6 +1,6 @@
-from enum import StrEnum, auto
+from typing import Literal, Required, TypedDict
 import uuid
-
+from dataclasses import dataclass
 
 type ID = str
 
@@ -11,6 +11,16 @@ def generate_id() -> ID:
     return str(uuid.uuid4())
 
 
-class Sender(StrEnum):
-    USER = auto()
-    ASSISTANT = auto()
+Sender = Literal['user', 'assistant']
+
+
+@dataclass(slots=True)
+class Message:
+    sender: Sender
+    content: str
+
+
+class AIAnswer(TypedDict, total=False):
+    chat_id: Required[ID]
+    is_successful: Required[bool]
+    content: str

@@ -1,5 +1,11 @@
+import platform
+import os
+
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
+
+from system_assistant.core import ROOT
 
 
 class URL(str):
@@ -12,3 +18,20 @@ class URL(str):
 
 type Speech = Path | URL | bytes
 type Output = Literal['file', 'bytes', 's3']
+
+
+@dataclass(eq=False, slots=True)
+class SystemContext:
+    operating_system: str
+    distribution: str
+    cwd: Path
+    directory_list: list[str]
+
+    @classmethod
+    def default(cls, cwd: Path | None = None) -> 'SystemContext':
+        return cls(
+            operating_system=platform.system(),
+            distribution=platform.freedesktop_os_release()['NAME'],
+            cwd=cwd or ROOT,
+            directory_list=os.listdir(),
+        )

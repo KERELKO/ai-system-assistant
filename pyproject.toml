@@ -29,6 +29,11 @@ package-dir = {"" = "src"}
 where = ["src"]
 exclude = ["tests"]
 
+[dependency-groups]
+dev = [
+    "ipython>=9.1.0",
+]
+
 [project.optional-dependencies]
 dev = [
     "setuptools>=78.1.0",
