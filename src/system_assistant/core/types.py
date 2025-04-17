@@ -17,7 +17,7 @@ class URL(str):
 
 
 type Speech = Path | URL | bytes
-type Output = Literal['file', 'bytes', 's3']
+type Output = Literal['file', 'bytes']
 
 
 @dataclass(eq=False, slots=True)

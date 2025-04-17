@@ -1,19 +1,19 @@
 from typing import Literal
+
 from langchain.tools import BaseTool
 from langchain_core.messages import BaseMessage
+from langchain_core.runnables.config import RunnableConfig
 from langchain_openai.chat_models import ChatOpenAI
 from langgraph.checkpoint.base import BaseCheckpointSaver
-from langgraph.prebuilt import create_react_agent
-
 from langgraph.graph.graph import CompiledGraph
-
-from langchain_core.runnables.config import RunnableConfig
+from langgraph.prebuilt import create_react_agent
 from pydantic import SecretStr
 
-from system_assistant.domain.entities.chat import Chat
-from system_assistant.infrastructure.services.ai.utils import to_langchain_message
 from system_assistant.core.config import Config
+from system_assistant.domain.entities.chat import Chat
 from system_assistant.domain.vo import AIAnswer
+from system_assistant.infrastructure.services.ai.utils import \
+    to_langchain_message
 
 
 class ReactOpenAIAgent:
@@ -35,7 +35,7 @@ class ReactOpenAIAgent:
 
     def init_deepseek_react_agent(self):
         from system_assistant.infrastructure.services.ai.deepseek import (
-            DEEPSEEK_CHAT_MODEL, DEEPSEEK_BASE_URL)
+            DEEPSEEK_BASE_URL, DEEPSEEK_CHAT_MODEL)
 
         _llm = ChatOpenAI(
             model=DEEPSEEK_CHAT_MODEL,
@@ -44,8 +44,7 @@ class ReactOpenAIAgent:
             temperature=self.temperature
         )
         self.__llm_type = 'deepseek'
-        if self.tools:
-            self._llm = _llm.bind_tools(self.tools)  # type: ignore
+        self._llm = _llm.bind_tools(self.tools)  # type: ignore
         self.agent_executor = create_react_agent(
             self._llm, tools=self.tools, checkpointer=self._memory_saver,
         )
@@ -81,8 +80,12 @@ class ReactOpenAIAgent:
                 ai_answer['content'] = last_message.content  # type: ignore
         return ai_answer
 
-    def remove_tools(self):
-        self.tools = []
+    def update_settings(self, temperature: float | None = None, tools: list | None = None):
+        if tools is not None:
+            self.tools = tools
+        if temperature is not None:
+            self.temperature = temperature
+
         if self.__llm_type == 'deepseek':
             self.init_deepseek_react_agent()
         elif self.__llm_type == 'gemini':

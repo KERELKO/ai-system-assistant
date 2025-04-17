@@ -55,17 +55,13 @@ def setup(
     print(enable_tools)
     print(cwd)
 
-    if llm == 'deepseek':
-        container = init_container(llm_type='deepseek')
-    elif llm == 'gemini':
-        container = init_container(llm_type='gemini')
-    else:
-        raise TypeError('Invalid LLM')
-
+    container = init_container(llm)
     ai_agent = t.cast(AIAgent, container.resolve(AIAgent))
-    ai_agent.temperature = temperature
+
     if enable_tools is False:
-        ai_agent.remove_tools()
+        ai_agent.update_settings(temperature=temperature, tools=[])
+    else:
+        ai_agent.update_settings(temperature=temperature)
 
     container.register(AIAgent, instance=ai_agent)
 

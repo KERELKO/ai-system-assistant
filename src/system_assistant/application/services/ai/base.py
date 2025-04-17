@@ -26,7 +26,7 @@ class AIAgent(Protocol):
         ...
 
     @abstractmethod
-    def remove_tools(self):
+    def update_settings(self, temperature: float | None = None, tools: list | None = None):
         ...
 
 
@@ -38,5 +38,5 @@ class FakeAIAgent:
     async def chat(self, chat: Chat) -> AIAnswer:
         return AIAnswer(chat_id=chat.id, is_successful=True, content="I'm fake AI agent")
 
-    def remove_tools(self):
+    def update_settings(self, temperature: float | None = None, tools: list | None = None):
         ...
