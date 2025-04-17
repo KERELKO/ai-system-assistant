@@ -6,7 +6,7 @@ from punq import Container, Scope  # type: ignore[import-untyped]
 
 from system_assistant.application.commands.generate_ai_voice_response import (
     GenerateAIVoiceResponseCommand, GenerateAIVoiceResponseCommandHandler)
-from system_assistant.application.commands.request_system_help_command import (
+from system_assistant.application.commands.request_system_help import (
     RequestSystemHelpCommand, RequestSystemHelpCommandHandler)
 from system_assistant.application.gateways.chat import ChatGateway, FakeChatGateway
 from system_assistant.application.mediator import Mediator

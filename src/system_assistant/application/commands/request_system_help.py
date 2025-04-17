@@ -36,7 +36,7 @@ class RequestSystemHelpCommandHandler(BaseCommandHandler[RequestSystemHelpComman
             directory_list=command.system_context.directory_list,
         )
         chat = Chat(
-            id=str(uuid.uuid4()),
+            id=command.chat_id or str(uuid.uuid4()),
             title=title,
             messages=[Message(sender='assistant', content=content)],
         )
@@ -45,7 +45,7 @@ class RequestSystemHelpCommandHandler(BaseCommandHandler[RequestSystemHelpComman
     async def handle(self, command: RequestSystemHelpCommand) -> AIAnswer:
         message = Message(sender='user', content=command.message)
 
-        if command.chat_id:
+        if command.chat_id is not None:
             chat = await self._chat_gateway.get_by_id(command.chat_id)
             if chat is None:
                 chat = self._create_chat(command)
@@ -54,5 +54,6 @@ class RequestSystemHelpCommandHandler(BaseCommandHandler[RequestSystemHelpComman
 
         chat.add_message(message)
         ai_answer = await self._ai_agent.chat(chat)
+        chat.add_message(Message(sender='assistant', content=ai_answer['content']))  # type: ignore
         await self._chat_gateway.save(chat)
         return ai_answer

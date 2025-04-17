@@ -1,6 +1,6 @@
+from pprint import pprint
 import typing as t
 
-from system_assistant.core.exceptions import ApplicationException
 from system_assistant.domain.entities.chat import Chat
 from system_assistant.domain.vo import ID, Message
 
@@ -22,12 +22,11 @@ class FakeChatGateway:
 
     async def get_by_id(self, id: ID) -> Chat | None:
         chat = self.chats.get(id, None)
-        if not chat:
-            raise ApplicationException('Not Found')
         return chat
 
     async def save(self, chat: Chat) -> ID:
         self.chats[chat.id] = chat
+        pprint(self.chats)
         return chat.id
 
     async def append_message(self, chat_id: ID, message: Message):

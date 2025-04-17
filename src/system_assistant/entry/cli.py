@@ -10,7 +10,7 @@ from loguru import logger
 
 from system_assistant.application.commands.generate_ai_voice_response import \
     GenerateAIVoiceResponseCommand
-from system_assistant.application.commands.request_system_help_command import \
+from system_assistant.application.commands.request_system_help import \
     RequestSystemHelpCommand
 from system_assistant.application.mediator import Mediator
 from system_assistant.application.services.ai.base import AIAgent
@@ -80,12 +80,15 @@ async def system_assistant(
     system_context = SystemContext.default(cwd=Path(cwd))
 
     if debug:
+        chat_id = '1'
         while True:
             user_input = input('Enter message ("q" to exit): ')
             if user_input.lower() == 'q':
                 break
             ai_response = (await mediator.handle_command(
-                RequestSystemHelpCommand(system_context=system_context, message=user_input)
+                RequestSystemHelpCommand(
+                    system_context=system_context, message=user_input, chat_id=chat_id,
+                )
             ))[0]
             logger.info(ai_response)
         return
@@ -99,7 +102,7 @@ async def system_assistant(
         while True:
             logger.info('Listening...')
             try:
-                audio = r.listen(source, timeout=3)
+                audio = r.listen(source)
             except sr.WaitTimeoutError:
                 logger.warning("Didn't recorgnize user voice or user didn't speak")
                 continue
