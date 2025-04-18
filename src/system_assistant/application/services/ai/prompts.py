@@ -15,7 +15,9 @@ Context:
     Directory list: {directory_list}
 
 Important:
-    If you are using provided tools that require path in their parameters ALWAYS pass this path
+    If you are using provided tools that require path in their parameters ALWAYS pass this path.
+    Give short and precise anwers.
+    DO NOT use Markdown or HTML for formatting, answer in plain text
 """
 
 

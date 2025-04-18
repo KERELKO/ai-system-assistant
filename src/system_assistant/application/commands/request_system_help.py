@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import uuid
 
+from loguru import logger
+
 from system_assistant.application.gateways.chat import ChatGateway
 from system_assistant.application.services.ai.base import AIAgent
 from system_assistant.core.types import SystemContext
@@ -43,6 +45,7 @@ class RequestSystemHelpCommandHandler(BaseCommandHandler[RequestSystemHelpComman
         return chat
 
     async def handle(self, command: RequestSystemHelpCommand) -> AIAnswer:
+        logger.info('Handling system help command')
         message = Message(sender='user', content=command.message)
 
         if command.chat_id is not None:
@@ -56,4 +59,5 @@ class RequestSystemHelpCommandHandler(BaseCommandHandler[RequestSystemHelpComman
         ai_answer = await self._ai_agent.chat(chat)
         chat.add_message(Message(sender='assistant', content=ai_answer['content']))  # type: ignore
         await self._chat_gateway.save(chat)
+        logger.info(f'Saved chat: chat_id={command.chat_id}')
         return ai_answer

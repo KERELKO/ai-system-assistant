@@ -1,23 +1,34 @@
 import asyncio
+from dataclasses import dataclass
 import sys
 import typing as t
 from pathlib import Path
-from punq import Container  # type: ignore[import-untyped]
+import uuid
 
 import click
 import speech_recognition as sr  # type: ignore[import-untyped]
 from loguru import logger
 
-from system_assistant.application.commands.generate_ai_voice_response import \
-    GenerateAIVoiceResponseCommand
 from system_assistant.application.commands.request_system_help import \
     RequestSystemHelpCommand
 from system_assistant.application.mediator import Mediator
 from system_assistant.application.services.ai.base import AIAgent
+from system_assistant.application.services.text_to_speech.base import BaseTextToSpeechService
 from system_assistant.core import ROOT
+from system_assistant.domain.vo import AIAnswer
 from system_assistant.infrastructure.ioc import init_container
 from system_assistant.core.types import SystemContext
 from system_assistant.infrastructure.services.sound.base import SoundService
+
+
+@dataclass(eq=False, slots=True)
+class Context:
+    temperature: float
+    llm: str
+    enable_tools: bool
+    system_context: SystemContext
+    debug: bool
+    chat_id: str | None
 
 
 @click.command()
@@ -43,20 +54,34 @@ from system_assistant.infrastructure.services.sound.base import SoundService
     help='Option to enable debug mode, in this mode speaking does not work',
     is_flag=True,
 )
+@click.option(
+    '--chat-id',
+    default=None,
+    help='Use to set custom chat ID, can be used later to provide richer context to LLM',
+)
 def setup(
     temperature: float,
     llm: str,
     enable_tools: bool,
     cwd: str,
-    debug: bool
+    debug: bool,
+    chat_id: str | None,
 ):
-    print(temperature)
-    print(llm)
-    print(enable_tools)
-    print(cwd)
+    chat_id = chat_id or str(uuid.uuid4())
+
+    logger.debug(f'LLM temperature={temperature}')
+    logger.debug(f'LLM={llm}')
+    logger.debug(f'enable-tools={enable_tools}')
+    logger.debug(f'cwd={cwd}')
+    logger.debug(f'chat-id={chat_id}')
 
     container = init_container(llm)
     ai_agent = t.cast(AIAgent, container.resolve(AIAgent))
+
+    if debug:
+        logger.level('DEBUG')
+    else:
+        logger.level('INFO')
 
     if enable_tools is False:
         ai_agent.update_settings(temperature=temperature, tools=[])
@@ -65,29 +90,47 @@ def setup(
 
     container.register(AIAgent, instance=ai_agent)
 
-    asyncio.run(system_assistant(container, debug, cwd))
+    context = Context(
+        temperature=temperature,
+        llm=llm,
+        enable_tools=enable_tools,
+        debug=debug,
+        chat_id=chat_id,
+        system_context=SystemContext.default(cwd=Path(cwd))
+    )
+    mediator = t.cast(Mediator, container.resolve(Mediator))
+    sound_service = t.cast(SoundService, container.resolve(SoundService))
+    text_to_speech_service = t.cast(
+        BaseTextToSpeechService, container.resolve(BaseTextToSpeechService)
+    )
+
+    asyncio.run(
+        system_assistant(
+            mediator,
+            sound_service,
+            text_to_speech_service,
+            context,
+        )
+    )
 
 
 async def system_assistant(
-    container: Container,
-    debug: bool,
-    cwd: str,
-    **kwargs,
+    mediator: Mediator,
+    sound_service: SoundService,
+    text_to_speech_service: BaseTextToSpeechService,
+    context: Context,
 ):
 
-    mediator = t.cast(Mediator, container.resolve(Mediator))
-    sound_service = t.cast(SoundService, container.resolve(SoundService))
-    system_context = SystemContext.default(cwd=Path(cwd))
-
-    if debug:
-        chat_id = '1'
+    if context.debug:
         while True:
             user_input = input('Enter message ("q" to exit): ')
             if user_input.lower() == 'q':
                 break
             ai_response = (await mediator.handle_command(
                 RequestSystemHelpCommand(
-                    system_context=system_context, message=user_input, chat_id=chat_id,
+                    system_context=context.system_context,
+                    message=user_input,
+                    chat_id=context.chat_id,
                 )
             ))[0]
             logger.info(ai_response)
@@ -109,25 +152,33 @@ async def system_assistant(
 
             try:
                 text = r.recognize_google(audio)  # type: ignore
-                logger.info(f'Recorgnized user voice: {text}')
+                logger.debug(f'Recorgnized user voice: {text}')
             except sr.UnknownValueError:
                 logger.error("Google Speech Recognition could not understand audio")
+                continue
             except sr.RequestError as e:
                 logger.error(
                     f"Could not request results from Google Speech Recognition service; {e}"
                 )
+                continue
 
             logger.debug(text)
             text = text.lower().strip()
 
-            if text == 'exit':
+            if not text:
+                continue
+            elif text == 'exit':
                 logger.info('Closing program')
                 sys.exit(0)
 
-            ai_response = (await mediator.handle_command(
-                GenerateAIVoiceResponseCommand(text=text, output='bytes')
+            ai_answer: AIAnswer = (await mediator.handle_command(
+                RequestSystemHelpCommand(
+                    message=text, system_context=context.system_context, chat_id=context.chat_id)
             ))[0]
-            sound_service.play_sound(ai_response)
+            speech = await text_to_speech_service.synthesize(
+                text=ai_answer['content'].strip(), output='bytes'
+            )
+            sound_service.play_sound(speech)  # type: ignore
             text = ''
 
 

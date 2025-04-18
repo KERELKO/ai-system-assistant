@@ -44,10 +44,11 @@ class ReactOpenAIAgent:
             temperature=self.temperature
         )
         self.__llm_type = 'deepseek'
-        self._llm = _llm.bind_tools(self.tools)  # type: ignore
-        self.agent_executor = create_react_agent(
-            self._llm, tools=self.tools, checkpointer=self._memory_saver,
-        )
+        if self.tools:
+            self._llm = _llm.bind_tools(self.tools)  # type: ignore
+            self.agent_executor = create_react_agent(
+                self._llm, tools=self.tools, checkpointer=self._memory_saver,
+            )
 
     def init_gemini_react_agent(self):
         from system_assistant.infrastructure.services.ai.gemini import (
@@ -68,13 +69,12 @@ class ReactOpenAIAgent:
 
     async def chat(self, chat: Chat) -> AIAnswer:
         converted_messsages = [to_langchain_message(msg) for msg in chat.messages]
-        ai_answer = AIAnswer(is_successful=True, chat_id=chat.id)
+        ai_answer = AIAnswer(is_successful=True, chat_id=chat.id, content='')
         async for messages in self.agent_executor.astream(
             input={'messages': converted_messsages},
             config=RunnableConfig(configurable={'thread_id': chat.id}),
             stream_mode='values',
         ):
-            print(messages)
             last_message: BaseMessage = messages['messages'][-1]  # type: ignore
             if last_message.type in ['ai', 'system', 'assistant']:
                 ai_answer['content'] = last_message.content  # type: ignore

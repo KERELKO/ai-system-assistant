@@ -20,7 +20,7 @@ class Message:
     content: str
 
 
-class AIAnswer(TypedDict, total=False):
+class AIAnswer(TypedDict, total=True):
     chat_id: Required[ID]
     is_successful: Required[bool]
     content: str
