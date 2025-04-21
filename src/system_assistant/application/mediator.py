@@ -1,7 +1,7 @@
 import asyncio
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, overload
 
 from system_assistant.application.commands.base import (BaseCommandHandler,
                                                         Command)
@@ -25,3 +25,21 @@ class Mediator:
             *[h.handle(command) for h in self.command_handlers[command.__class__]]
         )
         return results
+
+    @overload
+    def register_handlers(
+        self, command_or_query: type[Query], handlers: list[BaseQueryHandler],
+    ) -> None:
+        ...
+
+    @overload
+    def register_handlers(
+        self, command_or_query: type[Command], handlers: list[BaseCommandHandler],
+    ) -> None:
+        ...
+
+    def register_handlers(self, command_or_query, handlers):
+        if issubclass(command_or_query, Query):
+            self.query_handlers[command_or_query] = handlers
+        elif issubclass(command_or_query, Command):
+            self.command_handlers[command_or_query] = handlers

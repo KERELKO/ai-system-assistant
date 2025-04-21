@@ -3,9 +3,10 @@ import os
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Required, TypedDict
 
 from system_assistant.core import ROOT
+from system_assistant.domain.vo import ID
 
 
 class URL(str):
@@ -35,3 +36,9 @@ class SystemContext:
             cwd=cwd or ROOT,
             directory_list=os.listdir(),
         )
+
+
+class AIAnswer(TypedDict, total=True):
+    chat_id: Required[ID]
+    is_successful: Required[bool]
+    content: str

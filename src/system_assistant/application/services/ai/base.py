@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, Protocol
 
 from system_assistant.domain.entities.chat import Chat
-from system_assistant.domain.vo import AIAnswer
+from system_assistant.core.types import AIAnswer
 
 
 class LLM(ABC):

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from system_assistant.domain.vo import ID, Message
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=False)
 class Chat:
     id: ID
     title: str
@@ -12,3 +12,9 @@ class Chat:
 
     def add_message(self, message: Message):
         self.messages.append(message)
+
+    def __eq__(self, other) -> bool:
+        return self.id == other.id if isinstance(other, Chat) else False
+
+    def __hash__(self) -> int:
+        return hash(self.id)

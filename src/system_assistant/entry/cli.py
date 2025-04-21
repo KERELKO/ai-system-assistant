@@ -1,9 +1,9 @@
 import asyncio
-from dataclasses import dataclass
 import sys
 import typing as t
-from pathlib import Path
 import uuid
+from dataclasses import dataclass
+from pathlib import Path
 
 import click
 import speech_recognition as sr  # type: ignore[import-untyped]
@@ -13,11 +13,11 @@ from system_assistant.application.commands.request_system_help import \
     RequestSystemHelpCommand
 from system_assistant.application.mediator import Mediator
 from system_assistant.application.services.ai.base import AIAgent
-from system_assistant.application.services.text_to_speech.base import BaseTextToSpeechService
+from system_assistant.application.services.text_to_speech.base import \
+    BaseTextToSpeechService
 from system_assistant.core import ROOT
-from system_assistant.domain.vo import AIAnswer
+from system_assistant.core.types import SystemContext, AIAnswer
 from system_assistant.infrastructure.ioc import init_container
-from system_assistant.core.types import SystemContext
 from system_assistant.infrastructure.services.sound.base import SoundService
 
 
@@ -69,6 +69,11 @@ def setup(
 ):
     chat_id = chat_id or str(uuid.uuid4())
 
+    if debug:
+        logger.configure(handlers=[{"sink": sys.stdout, "level": "DEBUG"}])
+    else:
+        logger.configure(handlers=[{"sink": sys.stdout, "level": "INFO"}])
+
     logger.debug(f'LLM temperature={temperature}')
     logger.debug(f'LLM={llm}')
     logger.debug(f'enable-tools={enable_tools}')
@@ -77,11 +82,6 @@ def setup(
 
     container = init_container(llm)
     ai_agent = t.cast(AIAgent, container.resolve(AIAgent))
-
-    if debug:
-        logger.level('DEBUG')
-    else:
-        logger.level('INFO')
 
     if enable_tools is False:
         ai_agent.update_settings(temperature=temperature, tools=[])

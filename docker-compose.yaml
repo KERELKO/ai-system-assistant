@@ -23,7 +23,7 @@ services:
     ports:
       - 8080:8080
       - 9080:9080
-    command: dgraph alpha --my=alpha:7080 --zero=zero:5080
+    command: dgraph alpha --my=alpha:7080 --zero=zero:5080 --security whitelist=127.0.0.1,172.19.0.1
 
   ratel:
     image: dgraph/ratel:latest

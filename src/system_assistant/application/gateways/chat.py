@@ -16,7 +16,7 @@ class ChatGateway(t.Protocol):
         ...
 
 
-class FakeChatGateway:
+class InMemoryChatGateway:
     def __init__(self):
         self.chats = {}
 

@@ -7,7 +7,8 @@ from system_assistant.application.gateways.chat import ChatGateway
 from system_assistant.application.services.ai.base import AIAgent
 from system_assistant.core.types import SystemContext
 from system_assistant.domain.entities.chat import Chat
-from system_assistant.domain.vo import ID, AIAnswer, Message
+from system_assistant.domain.vo import ID, Message
+from system_assistant.core.types import AIAnswer
 from system_assistant.application.services.ai.prompts import construct_system_assistant_prompt
 
 from .base import BaseCommandHandler, Command
@@ -45,7 +46,7 @@ class RequestSystemHelpCommandHandler(BaseCommandHandler[RequestSystemHelpComman
         return chat
 
     async def handle(self, command: RequestSystemHelpCommand) -> AIAnswer:
-        logger.info('Handling system help command')
+        logger.info(f'Handling "{command.__class__.__name__}" command')
         message = Message(sender='user', content=command.message)
 
         if command.chat_id is not None:
