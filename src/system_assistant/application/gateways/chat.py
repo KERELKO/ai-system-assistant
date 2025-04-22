@@ -1,5 +1,6 @@
-from pprint import pprint
 import typing as t
+
+from loguru import logger
 
 from system_assistant.domain.entities.chat import Chat
 from system_assistant.domain.vo import ID, Message
@@ -26,7 +27,7 @@ class InMemoryChatGateway:
 
     async def save(self, chat: Chat) -> ID:
         self.chats[chat.id] = chat
-        pprint(self.chats)
+        logger.debug(self.chats)
         return chat.id
 
     async def append_message(self, chat_id: ID, message: Message):

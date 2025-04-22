@@ -105,3 +105,14 @@ def list_dir(path: str) -> list[str]:
     """
 
     return os.listdir(path)
+
+
+OS_TOOLS = [
+    create_file,
+    create_folder,
+    change_permissions,
+    list_dir,
+    is_valid_path,
+    delete_folder,
+    delete_file,
+]

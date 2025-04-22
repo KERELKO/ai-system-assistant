@@ -17,7 +17,7 @@ from system_assistant.application.services.text_to_speech.base import \
     BaseTextToSpeechService
 from system_assistant.core import ROOT
 from system_assistant.core.types import SystemContext, AIAnswer
-from system_assistant.infrastructure.ioc import init_container
+from system_assistant.infrastructure.ioc import init_container, ContainerConfiguration
 from system_assistant.infrastructure.services.sound.base import SoundService
 
 
@@ -32,10 +32,10 @@ class Context:
 
 
 @click.command()
-@click.option('--temperature', default=1.0, help='LLM temperature', show_default=True)
 @click.option(
     '--llm', default='deepseek', help='LLM, available: deepseek|gemini', show_default=True,
 )
+@click.option('--temperature', default=1.0, help='LLM temperature', show_default=True)
 @click.option(
     '--enable-tools',
     default=False,
@@ -51,17 +51,23 @@ class Context:
 @click.option(
     '--debug',
     default=False,
-    help='Option to enable debug mode, in this mode speaking does not work',
+    help=(
+        'Option to enable debug mode. '
+        'In this mode speaking does not work and logging level set to DEBUG'
+    ),
     is_flag=True,
 )
 @click.option(
     '--chat-id',
     default=None,
-    help='Use to set custom chat ID, can be used later to provide richer context to LLM',
+    help=(
+        'Use to provide custom chat ID. If persistent storage is available — saves chat history '
+        'there and later this chat history can be loaded to provide LLM with rich context'
+    ),
 )
 def setup(
     temperature: float,
-    llm: str,
+    llm: t.Literal['deepseek', 'gemini'],
     enable_tools: bool,
     cwd: str,
     debug: bool,
@@ -80,7 +86,13 @@ def setup(
     logger.debug(f'cwd={cwd}')
     logger.debug(f'chat-id={chat_id}')
 
-    container = init_container(llm)
+    container_configuration = ContainerConfiguration(
+        llm=llm,
+        llm_tools=('os', 'docker') if enable_tools else (),
+        llm_temperature=temperature,
+    )
+
+    container = init_container(container_configuration)
     ai_agent = t.cast(AIAgent, container.resolve(AIAgent))
 
     if enable_tools is False:
@@ -162,14 +174,13 @@ async def system_assistant(
                 )
                 continue
 
-            logger.debug(text)
-            text = text.lower().strip()
+            text = text.strip()
 
             if not text:
                 continue
-            elif text == 'exit':
-                logger.info('Closing program')
-                sys.exit(0)
+            if text.lower() == 'exit':
+                logger.info('Exit')
+                return
 
             ai_answer: AIAnswer = (await mediator.handle_command(
                 RequestSystemHelpCommand(
