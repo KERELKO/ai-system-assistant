@@ -13,4 +13,5 @@ test.py
 # Virtual environments
 .venv
 audio/
-dgraph/
+data/
+database.sqlite

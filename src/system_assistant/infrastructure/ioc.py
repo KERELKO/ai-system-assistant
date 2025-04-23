@@ -1,33 +1,48 @@
-from dataclasses import dataclass
 import typing as t
+from dataclasses import dataclass
 from functools import cache
 
-from punq import Container, Scope  # type: ignore[import-untyped]
+import docker  # type: ignore[import-untyped]
 from langchain.tools import BaseTool
+from punq import (  # type: ignore[import-untyped]
+    Container,
+    Scope,
+)
 
 from system_assistant.application.commands.generate_ai_voice_response import (
-    GenerateAIVoiceResponseCommandHandler
+    GenerateAIVoiceResponseCommandHandler,
 )
 from system_assistant.application.commands.request_system_help import (
-    RequestSystemHelpCommand, RequestSystemHelpCommandHandler)
-from system_assistant.application.gateways.chat import ChatGateway, InMemoryChatGateway
+    RequestSystemHelpCommand,
+    RequestSystemHelpCommandHandler,
+)
+from system_assistant.application.gateways.chat import (
+    ChatGateway,
+    InMemoryChatGateway,
+)
 from system_assistant.application.mediator import Mediator
-from system_assistant.application.services.ai.base import (LLM,  # noqa
-                                                           AIAgent, FakeAIAgent, FakeLLM)
-from system_assistant.application.services.text_to_speech.base import \
-    BaseTextToSpeechService
+from system_assistant.application.services.ai.base import LLM  # noqa
+from system_assistant.application.services.ai.base import (
+    AIAgent,
+    FakeAIAgent,
+    FakeLLM,
+)
+from system_assistant.application.services.text_to_speech.base import BaseTextToSpeechService
 from system_assistant.core.config import Config
-from system_assistant.infrastructure.services.ai.deepseek import \
-    DeepSeek, DeepSeekOpenAIAgent  # noqa
+from system_assistant.infrastructure.services.ai.deepseek import (  # noqa
+    DeepSeek,
+    DeepSeekOpenAIAgent,
+)
+from system_assistant.infrastructure.services.ai.gemini import (  # noqa
+    Gemini,
+    GeminiOpenAIAgent,
+)
 from system_assistant.infrastructure.services.ai.openai_agent import BaseReactOpenAIAgent
-from system_assistant.infrastructure.services.ai.gemini import Gemini, GeminiOpenAIAgent  # noqa
 from system_assistant.infrastructure.services.ai.tools.docker import DOCKER_TOOLS
 from system_assistant.infrastructure.services.ai.tools.os import OS_TOOLS
 from system_assistant.infrastructure.services.sound.base import SoundService
-from system_assistant.infrastructure.services.sound.mpg123 import \
-    MPG123SoundService
-from system_assistant.infrastructure.services.text_to_speech.google import \
-    GoogleTextToSpeechService
+from system_assistant.infrastructure.services.sound.mpg123 import MPG123SoundService
+from system_assistant.infrastructure.services.text_to_speech.google import GoogleTextToSpeechService
 
 
 @dataclass(frozen=True, repr=True, slots=True, eq=True)
@@ -42,9 +57,9 @@ def _register_llm(container: Container, configuration: ContainerConfiguration) -
     config = t.cast(Config, container.resolve(Config))
     tools: list[BaseTool] = []
 
-    if 'os' in (ct := configuration.llm_tools):
+    if 'os' in configuration.llm_tools:
         tools.extend(OS_TOOLS)
-    if 'docker' in ct:
+    if 'docker' in configuration.llm_tools:
         tools.extend(DOCKER_TOOLS)
 
     if configuration.llm == 'gemini':
@@ -104,6 +119,8 @@ def init_container(configuration: ContainerConfiguration) -> Container:
     container.register(ChatGateway, factory=InMemoryChatGateway)
 
     container.register(SoundService, MPG123SoundService, scope=Scope.transient)
+
+    container.register(docker.DockerClient, factory=docker.from_env)
 
     container.register(GenerateAIVoiceResponseCommandHandler)
     container.register(RequestSystemHelpCommandHandler)

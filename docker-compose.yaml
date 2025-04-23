@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./dgraph:/var/lib/dgraph
+      - ./data:/var/lib/dgraph
     ports:
       - 5080:5080
       - 6080:6080
@@ -19,7 +19,7 @@ services:
       - .env
     image: dgraph/dgraph:v24.1.2
     volumes:
-      - ./dgraph:/var/lib/dgraph
+      - ./data:/var/lib/dgraph
     ports:
       - 8080:8080
       - 9080:9080

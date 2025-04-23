@@ -9,6 +9,7 @@ description = "System assistant powered with AI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "aiosqlite>=0.21.0",
     "click>=8.1.8",
     "docker>=7.1.0",
     "langchain>=0.3.23",
@@ -18,6 +19,7 @@ dependencies = [
     "openai>=1.72.0",
     "punq>=0.7.0",
     "pyaudio>=0.2.14",
+    "pydgraph>=24.2.1",
     "python-dotenv>=1.1.0",
     "speechrecognition>=3.14.2",
     "uvicorn>=0.34.0",
@@ -39,3 +41,19 @@ dev = [
 dev = [
     "setuptools>=78.1.0",
 ]
+
+[tool.isort]
+multi_line_output=3
+include_trailing_comma=true
+line_length=100
+lines_after_imports=2
+lines_between_sections=1
+lines_between_types=0
+force_alphabetical_sort_within_sections=true
+ensure_newline_before_comments=true
+combine_as_imports=true
+combine_star=true
+skip_gitignore=true
+balanced_wrapping=true
+force_grid_wrap=2
+src_paths=["src"]

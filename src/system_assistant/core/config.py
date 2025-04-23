@@ -15,7 +15,7 @@ class Config:
     _deepseek_api_key: str = ''
     _google_api_key: str = ''
     _gemini_api_key: str = ''
-    dgraph_url: str = os.getenv('DGRAPH_URL', 'http://localhost:8080/graphql')
+    dgraph_url: str = os.getenv('DGRAPH_URL', 'dgraph://localhost:9080')
 
     @property
     def google_api_key(self) -> str:
