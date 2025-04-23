@@ -1,9 +1,13 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+ROOT = Path(__file__).parent.parent.parent.parent
 
 
 class ConfigError(Exception):
@@ -16,6 +20,7 @@ class Config:
     _google_api_key: str = ''
     _gemini_api_key: str = ''
     dgraph_url: str = os.getenv('DGRAPH_URL', 'dgraph://localhost:9080')
+    sqlite_url: str = os.getenv('SQLITE_URL', str(f'sqlite+aiosqlite:///{ROOT / 'database.db'}'))
 
     @property
     def google_api_key(self) -> str:

@@ -8,25 +8,49 @@ from pathlib import Path
 import click
 import speech_recognition as sr  # type: ignore[import-untyped]
 from loguru import logger
+from punq import (  # type: ignore
+    Container,
+    Scope,
+)
 
-from system_assistant.application.commands.request_system_help import \
-    RequestSystemHelpCommand
+from system_assistant.application.commands.request_system_help import RequestSystemHelpCommand
+from system_assistant.application.gateways.chat import ChatGateway
 from system_assistant.application.mediator import Mediator
-from system_assistant.application.services.ai.base import AIAgent
-from system_assistant.application.services.text_to_speech.base import \
-    BaseTextToSpeechService
+from system_assistant.application.services.text_to_speech.base import BaseTextToSpeechService
 from system_assistant.core import ROOT
-from system_assistant.core.types import SystemContext, AIAnswer
-from system_assistant.infrastructure.ioc import init_container, ContainerConfiguration
+from system_assistant.core.config import Config
+from system_assistant.core.types import (
+    AIAnswer,
+    SystemContext,
+)
+from system_assistant.infrastructure.db.sqlite.init import (
+    get_engine,
+    init_db,
+)
+from system_assistant.infrastructure.gateways.chat.sqlite import SQLiteChatGateway
+from system_assistant.infrastructure.ioc import (
+    init_base_container,
+    register_llm,
+    register_mediator,
+    register_mediator_handlers,
+    register_services,
+)
+from system_assistant.infrastructure.services.ai.tools.docker import DOCKER_TOOLS
+from system_assistant.infrastructure.services.ai.tools.os import OS_TOOLS
 from system_assistant.infrastructure.services.sound.base import SoundService
 
 
 @dataclass(eq=False, slots=True)
-class Context:
-    temperature: float
+class LLMConfiguration:
+    llm_temperature: float
     llm: str
-    enable_tools: bool
+    llm_enable_tools: bool
+
+
+@dataclass(eq=False, slots=True)
+class Context:
     system_context: SystemContext
+    llm_conf: LLMConfiguration
     debug: bool
     chat_id: str | None
 
@@ -58,6 +82,12 @@ class Context:
     is_flag=True,
 )
 @click.option(
+    '--storage',
+    default='memory',
+    help='Storage. Available: memory|sqlite|dgraph',
+    show_default=True,
+)
+@click.option(
     '--chat-id',
     default=None,
     help=(
@@ -65,15 +95,18 @@ class Context:
         'there and later this chat history can be loaded to provide LLM with rich context'
     ),
 )
-def setup(
+def setup_system_assistant(
     temperature: float,
-    llm: t.Literal['deepseek', 'gemini'],
+    llm: str,
     enable_tools: bool,
     cwd: str,
     debug: bool,
     chat_id: str | None,
+    storage: str,
 ):
     chat_id = chat_id or str(uuid.uuid4())
+
+    loop = asyncio.get_event_loop()
 
     if debug:
         logger.configure(handlers=[{"sink": sys.stdout, "level": "DEBUG"}])
@@ -86,44 +119,65 @@ def setup(
     logger.debug(f'cwd={cwd}')
     logger.debug(f'chat-id={chat_id}')
 
-    container_configuration = ContainerConfiguration(
-        llm=llm,
-        llm_tools=('os', 'docker') if enable_tools else (),
-        llm_temperature=temperature,
+    llm_configuration = LLMConfiguration(
+        llm_temperature=temperature, llm=llm, llm_enable_tools=enable_tools,
     )
-
-    container = init_container(container_configuration)
-    ai_agent = t.cast(AIAgent, container.resolve(AIAgent))
-
-    if enable_tools is False:
-        ai_agent.update_settings(temperature=temperature, tools=[])
-    else:
-        ai_agent.update_settings(temperature=temperature)
-
-    container.register(AIAgent, instance=ai_agent)
-
     context = Context(
-        temperature=temperature,
-        llm=llm,
-        enable_tools=enable_tools,
+        llm_conf=llm_configuration,
         debug=debug,
         chat_id=chat_id,
         system_context=SystemContext.default(cwd=Path(cwd))
     )
+
+    container = build_cli_container(storage, llm_configuration)
+    config = t.cast(Config, container.resolve(Config))
+
+    if storage == 'sqlite':
+        loop.run_until_complete(init_db(config))
+
     mediator = t.cast(Mediator, container.resolve(Mediator))
     sound_service = t.cast(SoundService, container.resolve(SoundService))
     text_to_speech_service = t.cast(
-        BaseTextToSpeechService, container.resolve(BaseTextToSpeechService)
+        BaseTextToSpeechService, container.resolve(BaseTextToSpeechService),
     )
 
-    asyncio.run(
-        system_assistant(
-            mediator,
-            sound_service,
-            text_to_speech_service,
-            context,
-        )
+    loop.run_until_complete(
+        system_assistant(mediator, sound_service, text_to_speech_service, context),
     )
+
+
+def build_cli_container(
+    storage: str,
+    llm_cf: LLMConfiguration,
+) -> Container:
+    container = init_base_container()
+    config = t.cast(Config, container.resolve(Config))
+
+    tools = [*OS_TOOLS, *DOCKER_TOOLS] if llm_cf.llm_enable_tools else []
+
+    if llm_cf.llm not in ('deepseek', 'gemini', 'fake'):
+        raise NotImplementedError(f'Unsupported LLM: {llm_cf.llm}')
+
+    register_llm(
+        container,
+        llm_tools=tools,
+        llm_type=llm_cf.llm,  # type: ignore
+        llm_temperature=llm_cf.llm_temperature,
+    )
+
+    if storage == 'memory':  # In base container already
+        ...
+    elif storage == 'sqlite':
+        engine = get_engine(config)
+        container.register(ChatGateway, instance=SQLiteChatGateway(engine), scope=Scope.singleton)
+    else:
+        raise NotImplementedError(f'Unsupported storage: {storage}')
+
+    register_services(container)
+    register_mediator_handlers(container)
+    register_mediator(container)
+
+    return container
 
 
 async def system_assistant(
@@ -132,7 +186,6 @@ async def system_assistant(
     text_to_speech_service: BaseTextToSpeechService,
     context: Context,
 ):
-
     if context.debug:
         while True:
             user_input = input('Enter message ("q" to exit): ')
@@ -195,7 +248,7 @@ async def system_assistant(
 
 if __name__ == '__main__':
     try:
-        setup()
+        asyncio.run(setup_system_assistant())
     except KeyboardInterrupt:
         logger.info('Exit')
         sys.exit(0)

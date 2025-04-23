@@ -1,5 +1,4 @@
 import typing as t
-from dataclasses import dataclass
 from functools import cache
 
 import docker  # type: ignore[import-untyped]
@@ -38,47 +37,37 @@ from system_assistant.infrastructure.services.ai.gemini import (  # noqa
     GeminiOpenAIAgent,
 )
 from system_assistant.infrastructure.services.ai.openai_agent import BaseReactOpenAIAgent
-from system_assistant.infrastructure.services.ai.tools.docker import DOCKER_TOOLS
-from system_assistant.infrastructure.services.ai.tools.os import OS_TOOLS
 from system_assistant.infrastructure.services.sound.base import SoundService
 from system_assistant.infrastructure.services.sound.mpg123 import MPG123SoundService
 from system_assistant.infrastructure.services.text_to_speech.google import GoogleTextToSpeechService
 
 
-@dataclass(frozen=True, repr=True, slots=True, eq=True)
-class ContainerConfiguration:
-    llm: t.Literal['deepseek', 'gemini', 'fake']
-    llm_tools: tuple[str, ...]
-    llm_temperature: float
-
-
-def _register_llm(container: Container, configuration: ContainerConfiguration) -> Container:
+def register_llm(
+    container: Container,
+    llm_type: t.Literal['deepseek', 'gemini', 'fake'],
+    llm_tools: list[BaseTool],
+    llm_temperature: float,
+) -> Container:
 
     config = t.cast(Config, container.resolve(Config))
-    tools: list[BaseTool] = []
 
-    if 'os' in configuration.llm_tools:
-        tools.extend(OS_TOOLS)
-    if 'docker' in configuration.llm_tools:
-        tools.extend(DOCKER_TOOLS)
-
-    if configuration.llm == 'gemini':
+    if llm_type == 'gemini':
         ai_agent: BaseReactOpenAIAgent = GeminiOpenAIAgent(
-            config, tools=tools, temperature=configuration.llm_temperature,
+            config, tools=llm_tools, temperature=llm_temperature,
         )
         llm: LLM = Gemini(config.gemini_api_key)
         container.register(Gemini, instance=llm, scope=Scope.singleton)
         container.register(LLM, instance=llm)
 
-    elif configuration.llm == 'deepseek':
+    elif llm_type == 'deepseek':
         ai_agent = DeepSeekOpenAIAgent(
-            config, tools=tools, temperature=configuration.llm_temperature,
+            config, tools=llm_tools, temperature=llm_temperature,
         )
         llm = DeepSeek(config.deepseek_api_key)
         container.register(DeepSeek, instance=llm, scope=Scope.singleton)
         container.register(LLM, instance=llm)
 
-    elif configuration.llm == 'fake':
+    elif llm_type == 'fake':
         llm = FakeLLM()
         container.register(LLM, FakeLLM)
         ai_agent = FakeAIAgent()  # type: ignore
@@ -87,7 +76,23 @@ def _register_llm(container: Container, configuration: ContainerConfiguration) -
     return container
 
 
-def _register_mediator(container: Container) -> Container:
+def register_mediator_handlers(container: Container) -> Container:
+    container.register(GenerateAIVoiceResponseCommandHandler)
+    container.register(RequestSystemHelpCommandHandler)
+
+    return container
+
+
+def register_services(container: Container) -> Container:
+    config = t.cast(Config, container.resolve(Config))
+    container.register(
+        BaseTextToSpeechService, instance=GoogleTextToSpeechService(config.google_api_key),
+    )
+    container.register(SoundService, MPG123SoundService, scope=Scope.transient)
+    return container
+
+
+def register_mediator(container: Container) -> Container:
     request_system_help_comand_handler = t.cast(
         RequestSystemHelpCommandHandler,
         container.resolve(RequestSystemHelpCommandHandler)
@@ -101,7 +106,7 @@ def _register_mediator(container: Container) -> Container:
 
 
 @cache
-def init_container(configuration: ContainerConfiguration) -> Container:
+def init_base_container() -> Container:
     """Function to initialize DI container"""
 
     container = Container()
@@ -109,22 +114,7 @@ def init_container(configuration: ContainerConfiguration) -> Container:
     config = Config()
     container.register(Config, instance=config, scope=Scope.singleton)
 
-    _register_llm(container, configuration)
-
-    text_to_speech_service = GoogleTextToSpeechService(config.google_api_key)
-    container.register(
-        BaseTextToSpeechService, instance=text_to_speech_service,
-    )
-
     container.register(ChatGateway, factory=InMemoryChatGateway)
-
-    container.register(SoundService, MPG123SoundService, scope=Scope.transient)
-
     container.register(docker.DockerClient, factory=docker.from_env)
-
-    container.register(GenerateAIVoiceResponseCommandHandler)
-    container.register(RequestSystemHelpCommandHandler)
-
-    _register_mediator(container)
 
     return container

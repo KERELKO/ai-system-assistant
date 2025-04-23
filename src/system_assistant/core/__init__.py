@@ -1,6 +1,3 @@
-from pathlib import Path
+from .config import ROOT, Config
 
-ROOT = Path(__file__).parent.parent.parent.parent
-
-
-__all__ = ['ROOT']
+__all__ = ['ROOT', 'Config']

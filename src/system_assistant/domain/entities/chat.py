@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from system_assistant.domain.vo import ID, Message
 
 
-@dataclass(slots=True, eq=False)
+@dataclass(eq=False)
 class Chat:
     id: ID
     title: str

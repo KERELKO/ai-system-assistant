@@ -9,7 +9,7 @@ type AssistantModel = str
 Sender = Literal['user', 'assistant']
 
 
-@dataclass(slots=True)
+@dataclass(eq=False)
 class Message:
     sender: Sender
     content: str
