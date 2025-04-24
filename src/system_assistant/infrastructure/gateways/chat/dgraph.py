@@ -4,9 +4,8 @@ import json
 import pydgraph  # type: ignore[import-untyped]
 from loguru import logger
 
-from system_assistant.application.gateways.chat import ChatGateway  # noqa
 from system_assistant.domain.entities.chat import Chat
-from system_assistant.domain.vo import ID, Message
+from system_assistant.domain.vo import ID
 
 
 _GET_CHAT_DATA_QUERY = """
@@ -45,6 +44,3 @@ class DgraphChatGateway:
             logger.error(str(e))
             txn.discard()
         return chat.id
-
-    async def append_message(self, chat_id: ID, message: Message):
-        raise NotImplementedError

@@ -38,6 +38,13 @@ class SystemContext:
         )
 
 
+@dataclass(eq=False, slots=True)
+class LLMConfiguration:
+    llm_temperature: float
+    llm: str
+    llm_enable_tools: bool
+
+
 class AIAnswer(TypedDict, total=True):
     chat_id: Required[ID]
     is_successful: Required[bool]

@@ -3,7 +3,7 @@ import typing as t
 from loguru import logger
 
 from system_assistant.domain.entities.chat import Chat
-from system_assistant.domain.vo import ID, Message
+from system_assistant.domain.vo import ID
 
 
 class ChatGateway(t.Protocol):
@@ -11,9 +11,6 @@ class ChatGateway(t.Protocol):
         raise NotImplementedError
 
     async def save(self, chat: Chat) -> ID:
-        ...
-
-    async def append_message(self, chat_id: ID, message: Message):
         ...
 
 
@@ -29,6 +26,3 @@ class InMemoryChatGateway:
         self.chats[chat.id] = chat
         logger.debug(self.chats)
         return chat.id
-
-    async def append_message(self, chat_id: ID, message: Message):
-        self.chats[chat_id].append_message(message)

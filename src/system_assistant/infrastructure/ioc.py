@@ -1,5 +1,4 @@
 import typing as t
-from functools import cache
 
 import docker  # type: ignore[import-untyped]
 from langchain.tools import BaseTool
@@ -28,6 +27,8 @@ from system_assistant.application.services.ai.base import (
 )
 from system_assistant.application.services.text_to_speech.base import BaseTextToSpeechService
 from system_assistant.core.config import Config
+from system_assistant.infrastructure.db.sqlite.init import get_engine
+from system_assistant.infrastructure.gateways.chat.sqlite import SQLiteChatGateway
 from system_assistant.infrastructure.services.ai.deepseek import (  # noqa
     DeepSeek,
     DeepSeekOpenAIAgent,
@@ -44,10 +45,12 @@ from system_assistant.infrastructure.services.text_to_speech.google import Googl
 
 def register_llm(
     container: Container,
-    llm_type: t.Literal['deepseek', 'gemini', 'fake'],
-    llm_tools: list[BaseTool],
-    llm_temperature: float,
+    llm_type: str = 'fake',
+    llm_tools: list[BaseTool] | None = None,
+    llm_temperature: float = 1.0,
 ) -> Container:
+
+    llm_tools = llm_tools or []
 
     config = t.cast(Config, container.resolve(Config))
 
@@ -72,6 +75,9 @@ def register_llm(
         container.register(LLM, FakeLLM)
         ai_agent = FakeAIAgent()  # type: ignore
 
+    else:
+        raise ValueError(f'Unsupported LLM: {llm_type}')
+
     container.register(AIAgent, instance=ai_agent, scope=Scope.singleton)  # type: ignore
     return container
 
@@ -79,6 +85,20 @@ def register_llm(
 def register_mediator_handlers(container: Container) -> Container:
     container.register(GenerateAIVoiceResponseCommandHandler)
     container.register(RequestSystemHelpCommandHandler)
+
+    return container
+
+
+def register_gateway(container: Container, storage: str) -> Container:
+    config = t.cast(Config, container.resolve(Config))
+
+    if storage == 'memory':
+        container.register(ChatGateway, factory=InMemoryChatGateway)
+    elif storage == 'sqlite':
+        engine = get_engine(config)
+        container.register(ChatGateway, instance=SQLiteChatGateway(engine), scope=Scope.singleton)
+    else:
+        raise ValueError(f'Unsupported storage: {storage}')
 
     return container
 
@@ -105,7 +125,6 @@ def register_mediator(container: Container) -> Container:
     return container
 
 
-@cache
 def init_base_container() -> Container:
     """Function to initialize DI container"""
 
@@ -114,7 +133,6 @@ def init_base_container() -> Container:
     config = Config()
     container.register(Config, instance=config, scope=Scope.singleton)
 
-    container.register(ChatGateway, factory=InMemoryChatGateway)
     container.register(docker.DockerClient, factory=docker.from_env)
 
     return container
