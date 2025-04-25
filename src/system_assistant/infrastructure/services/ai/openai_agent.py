@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 from langchain.tools import BaseTool
+
 from langchain_core.messages import BaseMessage
 from langchain_core.runnables.config import RunnableConfig
 from langchain_openai.chat_models import ChatOpenAI
@@ -9,10 +10,9 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph.graph import CompiledGraph
 
 from system_assistant.core.config import Config
-from system_assistant.domain.entities.chat import Chat
 from system_assistant.core.types import AIAnswer
-from system_assistant.infrastructure.services.ai.utils import \
-    to_langchain_message
+from system_assistant.domain.entities.chat import Chat
+from system_assistant.infrastructure.services.ai.utils import to_langchain_message
 
 
 class BaseReactOpenAIAgent:

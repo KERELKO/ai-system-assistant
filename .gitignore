@@ -14,4 +14,4 @@ test.py
 .venv
 audio/
 data/
-database.sqlite
+database.db
