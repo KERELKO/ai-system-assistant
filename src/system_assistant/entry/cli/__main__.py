@@ -32,9 +32,8 @@ from system_assistant.infrastructure.services.ai.tools.docker import DOCKER_TOOL
 from system_assistant.infrastructure.services.ai.tools.os import OS_TOOLS
 from system_assistant.infrastructure.services.sound.base import SoundService
 
-from .assistants.base import Context, Assistant
-from .assistants.debug import DebugAssistant
-from .assistants.voice import VoiceAssistant
+from .assistants.base import Context, BaseSystemAssistant
+from .assistants.voice import SystemAssistant
 
 
 @click.command()
@@ -57,10 +56,7 @@ from .assistants.voice import VoiceAssistant
 @click.option(
     '--debug',
     default=False,
-    help=(
-        'Option to enable debug mode. '
-        'In this mode microphone disabled and logging level set to DEBUG'
-    ),
+    help='Option to enable debug mode. In this mode logging level is set to DEBUG',
     is_flag=True,
 )
 @click.option(
@@ -77,6 +73,24 @@ from .assistants.voice import VoiceAssistant
         'there and later this chat history can be loaded to provide LLM with rich context'
     ),
 )
+@click.option(
+    '--input',
+    default='text',
+    help=(
+        'Input type. Avaiable: text|voice\n'
+        'If "voice" selected microphone will be used as source for input'
+    ),
+    show_default=True,
+)
+@click.option(
+    '--output',
+    default='text',
+    help=(
+        'Output type. Available: text|voice\nIf "voice" selected assistant will use '
+        'voice to answer'
+    ),
+    show_default=True,
+)
 def system_assistant(
     temperature: float,
     llm: str,
@@ -85,6 +99,8 @@ def system_assistant(
     debug: bool,
     chat_id: str | None,
     storage: str,
+    input: str,
+    output: str,
 ):
     chat_id = chat_id or str(uuid.uuid4())
 
@@ -94,6 +110,12 @@ def system_assistant(
         logger.configure(handlers=[{"sink": sys.stdout, "level": "DEBUG"}])
     else:
         logger.configure(handlers=[{"sink": sys.stdout, "level": "INFO"}])
+
+    if input not in ('text', 'voice'):
+        raise ValueError(f'Invalid input option: {input}')
+
+    if output not in ('text', 'voice'):
+        raise ValueError(f'Invalid output option: {output}')
 
     logger.debug(f'LLM temperature={temperature}')
     logger.debug(f'LLM={llm}')
@@ -123,12 +145,16 @@ def system_assistant(
         BaseTextToSpeechService, container.resolve(BaseTextToSpeechService),
     )
 
-    if debug:
-        assistant: Assistant = DebugAssistant(mediator, context)
-        loop.run_until_complete(assistant.run())
-    else:
-        assistant = VoiceAssistant(mediator, context, text_to_speech_service, sound_service)
-        loop.run_until_complete(assistant.run())
+    assistant: BaseSystemAssistant = SystemAssistant(
+        mediator,
+        context,
+        recognizer_type='whisper',
+        text_to_speech_service=text_to_speech_service,
+        sound_service=sound_service,
+        input=input,  # type: ignore
+        output=output,  # type: ignore
+    )
+    loop.run_until_complete(assistant.run())
 
 
 def build_cli_container(

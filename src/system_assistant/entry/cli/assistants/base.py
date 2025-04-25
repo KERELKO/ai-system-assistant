@@ -14,7 +14,7 @@ class Context:
 
 
 @dataclass(eq=False, repr=False, slots=True)
-class Assistant:
+class BaseSystemAssistant:
     mediator: Mediator
     context: Context
 

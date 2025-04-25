@@ -4,7 +4,7 @@ import subprocess
 class MPG123SoundService:
     """
     Sound service that uses linux `mpg123` utility to play sound
-    * Works only if you have `mpg123` installed on your machine
+    * Works only if you have `mpg123` installed on the machine
     """
 
     def play_sound(self, stream: bytes):
