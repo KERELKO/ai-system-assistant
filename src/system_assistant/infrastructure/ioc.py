@@ -6,10 +6,6 @@ from punq import (  # type: ignore[import-untyped]
     Container,
     Scope,
 )
-
-from system_assistant.application.commands.generate_ai_voice_response import (
-    GenerateAIVoiceResponseCommandHandler,
-)
 from system_assistant.application.commands.request_system_help import (
     RequestSystemHelpCommand,
     RequestSystemHelpCommandHandler,
@@ -83,7 +79,6 @@ def register_llm(
 
 
 def register_mediator_handlers(container: Container) -> Container:
-    container.register(GenerateAIVoiceResponseCommandHandler)
     container.register(RequestSystemHelpCommandHandler)
 
     return container

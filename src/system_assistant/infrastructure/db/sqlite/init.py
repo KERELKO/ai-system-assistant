@@ -6,7 +6,7 @@ from .tables import mapper_registry
 
 
 async def init_db(config: Config):
-    engine = create_async_engine(url=config.sqlite_url, echo=True)
+    engine = get_engine(config)
 
     async with engine.begin() as conn:
         await conn.run_sync(mapper_registry.metadata.create_all)
