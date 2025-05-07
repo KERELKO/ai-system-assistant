@@ -14,12 +14,12 @@ class TextSystemAssistant(BaseSystemAssistant):
             user_input = input('Enter message ("q" to exit): ')
             if user_input.lower() == 'q':
                 break
-            ai_response: AIAnswer = (await self.mediator.handle_command(
+            ai_response: AIAnswer = await self.mediator.handle_command(
                 RequestSystemHelpCommand(
                     system_context=self.context.system_context,
                     message=user_input,
                     chat_id=self.context.chat_id,
                 )
-            ))[0]
+            )
             pprint(ai_response)
             print(ai_response['content'])

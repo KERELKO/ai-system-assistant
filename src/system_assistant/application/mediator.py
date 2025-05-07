@@ -1,4 +1,3 @@
-import asyncio
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, overload
@@ -20,11 +19,9 @@ class Mediator:
     async def handle_query(self, query: Query) -> Any:
         return await self.query_handlers[query.__class__].handle(query)
 
-    async def handle_command(self, command: Command) -> list[Any]:
-        results = await asyncio.gather(
-            *[h.handle(command) for h in self.command_handlers[command.__class__]]
-        )
-        return results
+    async def handle_command(self, command: Command) -> Any:
+        result = await self.command_handlers[command.__class__][0].handle(command)
+        return result
 
     @overload
     def register_handlers(

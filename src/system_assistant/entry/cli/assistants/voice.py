@@ -78,13 +78,13 @@ class SystemAssistant(BaseSystemAssistant):
                 logger.info('Exit')
                 return
 
-            ai_answer: AIAnswer = (await self.mediator.handle_command(
+            ai_answer: AIAnswer = await self.mediator.handle_command(
                 RequestSystemHelpCommand(
                     message=text,
                     system_context=self.context.system_context,
                     chat_id=self.context.chat_id,
                 )
-            ))[0]
+            )
             logger.debug(ai_answer)
             answer(ai_answer['content'])
             text = ''
@@ -107,13 +107,13 @@ class SystemAssistant(BaseSystemAssistant):
                     logger.info('Exit')
                     return
 
-                ai_answer: AIAnswer = (await self.mediator.handle_command(
+                ai_answer: AIAnswer = await self.mediator.handle_command(
                     RequestSystemHelpCommand(
                         message=text,
                         system_context=self.context.system_context,
                         chat_id=self.context.chat_id,
                     )
-                ))[0]
+                )
                 logger.debug(ai_answer)
                 answer(ai_answer['content'])
                 text = ''
