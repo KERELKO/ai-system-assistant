@@ -19,6 +19,7 @@ class Config:
     _deepseek_api_key: str = ''
     _google_api_key: str = ''
     _gemini_api_key: str = ''
+    _brave_search_api_key: str = ''
     dgraph_url: str = os.getenv('DGRAPH_URL', 'dgraph://localhost:9080')
     sqlite_url: str = os.getenv('SQLITE_URL', str(f'sqlite+aiosqlite:///{ROOT / 'database.db'}'))
 
@@ -50,6 +51,16 @@ class Config:
         if not key:
             raise ConfigError('No value for "gemini_api_key"')
         self._gemini_api_key = key
+        return key
+
+    @property
+    def brave_search_api_key(self) -> str:
+        if (key := self._brave_search_api_key):
+            return key
+        key = os.getenv('BRAVE_SEARCH_API_KEY', '')
+        if not key:
+            raise ConfigError('No value for "brave_search_api_key"')
+        self._brave_search_api_key = key
         return key
 
     def __post_init__(self):

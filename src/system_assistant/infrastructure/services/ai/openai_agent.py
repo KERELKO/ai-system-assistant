@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Any
 
 from langchain.tools import BaseTool
 
@@ -22,6 +23,7 @@ class BaseReactOpenAIAgent:
         tools: list[BaseTool],
         memory_saver: BaseCheckpointSaver = MemorySaver(),
         temperature: float = 1.0,
+        extra_input: dict[str, Any] | None = None,
     ):
         self._memory_saver = memory_saver
         self._config = config
@@ -29,6 +31,7 @@ class BaseReactOpenAIAgent:
         self.temperature = temperature
 
         self._agent = self.initialize()
+        self._extra_input: dict[str, Any] = extra_input or {}
 
     @abstractmethod
     def initialize(self) -> ChatOpenAI | CompiledGraph:
@@ -38,7 +41,7 @@ class BaseReactOpenAIAgent:
         converted_messsages = [to_langchain_message(msg) for msg in chat.messages]
         ai_answer = AIAnswer(is_successful=True, chat_id=chat.id, content='')
         async for messages in self._agent.astream(
-            input={'messages': converted_messsages},  # type: ignore
+            input={'messages': converted_messsages, **self._extra_input},  # type: ignore
             config=RunnableConfig(configurable={'thread_id': chat.id}),
             stream_mode='values',
         ):

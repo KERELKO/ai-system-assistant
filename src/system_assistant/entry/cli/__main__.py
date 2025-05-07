@@ -30,6 +30,7 @@ from system_assistant.infrastructure.ioc import (
 )
 from system_assistant.infrastructure.services.ai.tools.docker import DOCKER_TOOLS
 from system_assistant.infrastructure.services.ai.tools.os import OS_TOOLS
+from system_assistant.infrastructure.services.ai.tools.search import build_brave_search_tool
 from system_assistant.infrastructure.services.sound.base import SoundService
 
 from .assistants.base import Context, BaseSystemAssistant
@@ -163,7 +164,11 @@ def build_cli_container(
 ) -> Container:
     container = init_base_container()
 
-    tools = [*OS_TOOLS, *DOCKER_TOOLS] if llm_cf.llm_enable_tools else []
+    config = t.cast(Config, container.resolve(Config))
+
+    brave_search_tool = build_brave_search_tool(config)
+
+    tools = [*OS_TOOLS, *DOCKER_TOOLS, brave_search_tool] if llm_cf.llm_enable_tools else []
 
     register_llm(
         container,

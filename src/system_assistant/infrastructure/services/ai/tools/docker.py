@@ -17,4 +17,14 @@ def list_containers() -> list[dict[str, Any]]:
     return [{'name': c.name, 'id': c.id} for c in containers]
 
 
+def run_container(path: str) -> dict[str, Any]:
+    """
+    Run container located by `path` where destination is Dockerfile
+
+    Args:
+        path: absolute path to Dockerfile (e.g. /my_path/my_project/Dockerfile)
+    """
+    return {}
+
+
 DOCKER_TOOLS = [list_containers]
