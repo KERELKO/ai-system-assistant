@@ -108,8 +108,9 @@ def run_docker_compose(path: str, services: list[str] | None = None, build: bool
     """
     specified_services: str = '' if not services else ' '.join(services)
     build_flag = '' if build is False else '--build'
-    info = subprocess.run(f'docker compose -f {path} up {specified_services} {build_flag} -d')
-    logger.debug(info.stdout.decode())
+    command = f'docker compose -f {path} up {specified_services} {build_flag} -d'
+    info = subprocess.run(command, shell=True, capture_output=True, text=True)
+    logger.debug(info.stdout)
 
 
 def stop_docker_compose(path: str):
@@ -119,8 +120,9 @@ def stop_docker_compose(path: str):
     Args:
         path: aboslute path to docker compose file.
     """
-    info = subprocess.run(f'docker compose -f {path} down')
-    logger.debug(info.stdout.decode())
+    command = f'docker compose -f {path} down'
+    info = subprocess.run(command, shell=True, capture_output=True, text=True)
+    logger.debug(info.stdout)
 
 
 DOCKER_TOOLS = [
