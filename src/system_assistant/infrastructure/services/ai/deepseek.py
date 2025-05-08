@@ -40,7 +40,7 @@ class DeepSeek(LLM):
 
 
 class DeepSeekOpenAIAgent(BaseReactOpenAIAgent):
-    def initialize(self) -> ChatOpenAI | CompiledGraph:
+    def build_agent(self) -> ChatOpenAI | CompiledGraph:
         _llm = ChatOpenAI(
             model=DEEPSEEK_CHAT_MODEL,
             base_url=DEEPSEEK_BASE_URL,

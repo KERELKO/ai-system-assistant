@@ -30,11 +30,11 @@ class BaseReactOpenAIAgent:
         self.tools = tools
         self.temperature = temperature
 
-        self._agent = self.initialize()
+        self._agent = self.build_agent()
         self._extra_input: dict[str, Any] = extra_input or {}
 
     @abstractmethod
-    def initialize(self) -> ChatOpenAI | CompiledGraph:
+    def build_agent(self) -> ChatOpenAI | CompiledGraph:
         raise NotImplementedError
 
     async def chat(self, chat: Chat) -> AIAnswer:
@@ -55,4 +55,4 @@ class BaseReactOpenAIAgent:
             self.tools = tools
         if temperature is not None:
             self.temperature = temperature
-        self._agent = self.initialize()
+        self._agent = self.build_agent()

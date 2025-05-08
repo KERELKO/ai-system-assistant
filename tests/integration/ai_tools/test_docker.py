@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pytest
-
 from system_assistant.core.config import ROOT
 from system_assistant.infrastructure.services.ai.tools.docker import (
     build_docker_image, run_docker_container, stop_docker_container,
@@ -9,7 +7,6 @@ from system_assistant.infrastructure.services.ai.tools.docker import (
 )
 
 
-@pytest.mark.skip
 class TestDockerTools:
     dockerfile: str = 'Dockerfile.test'
     path: Path = ROOT
@@ -44,10 +41,10 @@ class TestDockerComposeTools:
     docker_compose_file_path: Path = ROOT / 'docker-compose.yaml'
 
     def test_can_run_docker_compose(self):
-        result = run_docker_compose(str(self.docker_compose_file_path), build=True)
+        _ = run_docker_compose(str(self.docker_compose_file_path), build=True)
 
     def test_can_stop_docker_compose(self):
-        result = stop_docker_compose(str(self.docker_compose_file_path))
+        _ = stop_docker_compose(str(self.docker_compose_file_path))
 
     def test_can_run_specific_docker_compose_services(self):
-        result = run_docker_compose(str(self.docker_compose_file_path), services=['zero'])
+        _ = run_docker_compose(str(self.docker_compose_file_path), services=['zero'])

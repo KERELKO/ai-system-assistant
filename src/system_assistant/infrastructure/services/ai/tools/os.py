@@ -4,7 +4,6 @@ from pathlib import Path
 from langchain.tools import tool
 
 
-@tool(parse_docstring=True)
 def create_file(file_path: str, permission_level: int = 438) -> str:
     """
     Create a file by path.
@@ -22,7 +21,6 @@ def create_file(file_path: str, permission_level: int = 438) -> str:
     return file_path
 
 
-@tool(parse_docstring=True)
 def create_folder(
     folder_path: str,
     parents: bool = False,
@@ -41,7 +39,6 @@ def create_folder(
     path_obj.mkdir(permission_level, parents)
 
 
-@tool(parse_docstring=True)
 def change_permissions(path: str, permission_level: int, recursive: bool = False):
     """
     Change permission of the file or folder
@@ -56,7 +53,6 @@ def change_permissions(path: str, permission_level: int, recursive: bool = False
     path_obj.chmod(permission_level)
 
 
-@tool(parse_docstring=True)
 def delete_file(path: str):
     """
     Delete file by provided path
@@ -68,7 +64,6 @@ def delete_file(path: str):
     path_obj.unlink(missing_ok=True)
 
 
-@tool(parse_docstring=True)
 def delete_folder(path: str):
     """
     Delete folder by provided path
@@ -80,7 +75,6 @@ def delete_folder(path: str):
     path_obj.rmdir()
 
 
-@tool(parse_docstring=True)
 def is_valid_path(path: str) -> bool:
     """
     Check if path is valid on current OS
@@ -92,7 +86,6 @@ def is_valid_path(path: str) -> bool:
     return True if Path(path).exists() else False
 
 
-@tool(parse_docstring=True)
 def list_dir(path: str) -> list[str]:
     """
     List files and folders by path.
@@ -108,11 +101,13 @@ def list_dir(path: str) -> list[str]:
 
 
 OS_TOOLS = [
-    create_file,
-    create_folder,
-    change_permissions,
-    list_dir,
-    is_valid_path,
-    delete_folder,
-    delete_file,
+    tool(f, parse_docstring=True) for f in (
+        create_file,
+        create_folder,
+        change_permissions,
+        list_dir,
+        is_valid_path,
+        delete_folder,
+        delete_file,
+    )
 ]

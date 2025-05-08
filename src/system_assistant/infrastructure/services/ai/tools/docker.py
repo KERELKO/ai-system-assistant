@@ -11,7 +11,7 @@ from langchain.tools import tool
 client = docker.from_env()
 
 
-def list_docker_containers() -> list[dict[str, Any]]:
+def list_docker_containers() -> list[dict[str, Any]] | None:
     """
     List all running docker containers
     """
@@ -19,7 +19,7 @@ def list_docker_containers() -> list[dict[str, Any]]:
     containers: list[Container] = client.containers.list()
     result = [{'name': c.name, 'id': c.id} for c in containers]
     logger.debug(f'List docker containers: {result}')
-    return result
+    return result or None
 
 
 def build_docker_image(
@@ -43,7 +43,7 @@ def build_docker_image(
     result = {
         'image': {'id': image.id, 'tag': image.tags},
     }
-    logger.debug(f'Built docker container: {result}')
+    logger.debug(f'Built docker image: {result}')
     return result
 
 
@@ -102,15 +102,23 @@ def run_docker_compose(path: str, services: list[str] | None = None, build: bool
     Runs containers located in docker-compose.yaml file located at the end of `path`.
 
     Args:
-        path: aboslute path to docker compose file.
-        services: name of the services to run
+        path: aboslute path to docker compose file (e.g. /my/path/docker-compose.yaml).
+        services: name of the services to run. Default is All
         build: --build flag that builds image
     """
+    result = {'success': True, 'msg': 'Containers now running!'}
     specified_services: str = '' if not services else ' '.join(services)
     build_flag = '' if build is False else '--build'
     command = f'docker compose -f {path} up {specified_services} {build_flag} -d'
-    info = subprocess.run(command, shell=True, capture_output=True, text=True)
-    logger.debug(info.stdout)
+    logger.debug(f'Run docker compose commad: {command}')
+    try:
+        info = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        logger.debug(f'Run docker compose result: {info.stdout}')
+    except subprocess.CalledProcessError as e:
+        logger.error(f'Error occured while running docker containers: {e}')
+        result['success'] = False
+        result['msg'] = str(e)
+    return result
 
 
 def stop_docker_compose(path: str):
@@ -118,11 +126,19 @@ def stop_docker_compose(path: str):
     Stop containers defined in docker compose file located at the end of `path`.
 
     Args:
-        path: aboslute path to docker compose file.
+        path: aboslute path to docker compose file (e.g. /my/path/docker-compose.yaml).
     """
+    result = {'success': True, 'msg': 'Containers now running!'}
     command = f'docker compose -f {path} down'
-    info = subprocess.run(command, shell=True, capture_output=True, text=True)
-    logger.debug(info.stdout)
+    logger.debug(f'Stop docker compose command: {command}')
+    try:
+        info = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        logger.debug(f'Stop docker compose result: {info.stdout}')
+    except subprocess.CalledProcessError as e:
+        logger.error(f'Error occured while stopping docker containers: {e}')
+        result['msg'] = str(e)
+        result['success'] = False
+    return result
 
 
 DOCKER_TOOLS = [
@@ -130,6 +146,7 @@ DOCKER_TOOLS = [
         list_docker_containers,
         build_docker_image,
         run_docker_container,
+        stop_docker_container,
         run_docker_compose,
         stop_docker_compose,
     )

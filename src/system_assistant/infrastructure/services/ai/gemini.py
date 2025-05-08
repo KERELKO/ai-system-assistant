@@ -39,7 +39,7 @@ class Gemini(LLM):
 
 
 class GeminiOpenAIAgent(BaseReactOpenAIAgent):
-    def initialize(self) -> CompiledGraph:
+    def build_agent(self) -> CompiledGraph:
         _llm = ChatOpenAI(
             model=GEMINI_MODEL,
             base_url=GEMINI_API_BASE_URL,

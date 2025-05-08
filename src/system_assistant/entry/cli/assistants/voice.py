@@ -53,13 +53,11 @@ class SystemAssistant(BaseSystemAssistant):
             )
         return ''
 
-    def _answer_text(self, text: str):
-        print(text)
+    async def _answer_text(self, text: str):
+        print(f'Asisstant answers: {text}')
 
     async def _answer_voice(self, text: str):
-        speech = await self.text_to_speech_service.synthesize(
-            text=text.strip(), output='bytes'
-        )
+        speech = await self.text_to_speech_service.synthesize(text=text.strip(), output='bytes')
         self.sound_service.play_sound(speech)  # type: ignore
 
     async def run(self):
@@ -73,6 +71,7 @@ class SystemAssistant(BaseSystemAssistant):
         while True:
             text = self._get_text_input().strip()
             if not text:
+                logger.warning('No text input from user')
                 continue
             if text == 'exit':
                 logger.info('Exit')
@@ -86,7 +85,7 @@ class SystemAssistant(BaseSystemAssistant):
                 )
             )
             logger.debug(ai_answer)
-            answer(ai_answer['content'])
+            await answer(ai_answer['content'])
             text = ''
 
     async def _run_with_voice_input(self):
@@ -115,5 +114,5 @@ class SystemAssistant(BaseSystemAssistant):
                     )
                 )
                 logger.debug(ai_answer)
-                answer(ai_answer['content'])
+                await answer(ai_answer['content'])
                 text = ''

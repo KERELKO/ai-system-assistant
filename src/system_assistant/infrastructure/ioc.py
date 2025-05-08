@@ -1,6 +1,5 @@
 import typing as t
 
-import docker  # type: ignore[import-untyped]
 from langchain.tools import BaseTool
 from punq import (  # type: ignore[import-untyped]
     Container,
@@ -127,7 +126,5 @@ def init_base_container() -> Container:
 
     config = Config()
     container.register(Config, instance=config, scope=Scope.singleton)
-
-    container.register(docker.DockerClient, factory=docker.from_env)
 
     return container
