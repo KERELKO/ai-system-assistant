@@ -22,7 +22,7 @@ An intelligent voice-controlled assistant that helps users interact with their o
 - Python 3.12+
 - Docker (for container operations)
 - System dependencies:
-  - `mpg123` for audio playback (Linux: `sudo apt install mpg123`)
+  - `mpg123` for audio playback (Debian/Ubuntu: `sudo apt install mpg123`)
 
 ### Steps
 
